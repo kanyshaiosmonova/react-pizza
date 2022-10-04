@@ -5,7 +5,7 @@ function NotFoundBlock() {
   return (
     <div className={styles.root}>
       <h1>
-        <span>😕</span>
+        <span className="emoji">😕</span>
         <br />
         Ничего не найдено
       </h1>
