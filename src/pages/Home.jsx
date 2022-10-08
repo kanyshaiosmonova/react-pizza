@@ -1,14 +1,17 @@
 import React from 'react';
+import ReactPaginate from 'react-paginate';
 
 import Categories from '../components/Categories';
 import Sort from '../components/Sort';
+import Pagination from '../components/Pagination';
 import PizzaBlock from '../components/PizzaBlock';
 import Skeleton from '../components/PizzaBlock/Skeleton';
 
-export default function Home() {
+export default function Home({ searchValue }) {
   const [items, setItems] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [categoryId, setCategoryId] = React.useState(0);
+  const [currentPage, setCurrentPage] = React.useState(1);
   const [sortType, setSortType] = React.useState({
     name: 'популярности',
     sortProperty: 'rating',
@@ -16,10 +19,13 @@ export default function Home() {
 
   React.useEffect(() => {
     setIsLoading(true);
+
+    const order = sortType.sortProperty.includes('-') ? 'desc' : 'asc';
+    const sortBy = sortType.sortProperty.replace('-', '');
+    const category = categoryId > 0 ? `category=${categoryId}` : '';
+    const search = searchValue ? `&search=${searchValue}` : '';
     fetch(
-      `https://633b233e471b8c39557d3011.mockapi.io/items?${
-        categoryId > 0 ? `category=${categoryId}` : ''
-      }&sortBy=${sortType.sortProperty}&order=desc`,
+      `https://633b233e471b8c39557d3011.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
     )
       .then((res) => {
         return res.json();
@@ -29,7 +35,7 @@ export default function Home() {
         setIsLoading(false);
       });
     window.scrollTo(0, 0);
-  }, [categoryId, sortType]);
+  }, [categoryId, sortType, searchValue, currentPage]);
   return (
     <div className="container">
       <div className="content__top">
@@ -40,8 +46,16 @@ export default function Home() {
       <div className="content__items">
         {isLoading
           ? [...new Array(6)].map((_, index) => <Skeleton key={index} />)
-          : items.map((obj) => <PizzaBlock {...obj} key={obj.id} />)}
+          : items
+              .filter((obj) => {
+                if (obj.title.toLowerCase().includes(searchValue.toLowerCase())) {
+                  return true;
+                }
+                return false;
+              })
+              .map((obj) => <PizzaBlock {...obj} key={obj.id} />)}
       </div>
+      <Pagination onChangePage={(number) => setCurrentPage(number)} />
     </div>
   );
 }
