@@ -1,7 +1,10 @@
 import React from 'react';
+import qs from 'qs';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
-import { setCategoryId, setCurrentPage } from '../redux/slices/filterSlice';
+import { setCategoryId, setCurrentPage, setFilters } from '../redux/slices/filterSlice';
+import { list } from '../components/Sort';
 import Categories from '../components/Categories';
 import Sort from '../components/Sort';
 import Pagination from '../components/Pagination';
@@ -11,6 +14,7 @@ import { SearchContext } from '../App';
 import axios from 'axios';
 
 const Home = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const { categoryId, sort, currentPage } = useSelector((state) => state.filter);
 
@@ -24,6 +28,20 @@ const Home = () => {
   const onChangePage = (number) => {
     dispatch(setCurrentPage(number));
   };
+
+  React.useEffect(() => {
+    if (window.location.search) {
+      const params = qs.parse(window.location.search.substring(1));
+
+      const sort = list.find((obj) => obj.sortProperty === params.sortProperty);
+      dispatch(
+        setFilters({
+          ...params,
+          sort,
+        }),
+      );
+    }
+  }, []);
   React.useEffect(() => {
     setIsLoading(true);
 
@@ -34,7 +52,7 @@ const Home = () => {
 
     axios
       .get(
-        `https://633b233e471b8c39557d3011.mockapi.io/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
+        `https://mockapi.io/projects/634f9f8e78563c1d82ab0b56/items?page=${currentPage}&limit=4&${category}&sortBy=${sortBy}&order=${order}${search}`,
       )
       .then((res) => {
         setItems(res.data);
@@ -42,6 +60,15 @@ const Home = () => {
       });
     window.scrollTo(0, 0);
   }, [categoryId, sort.sortProperty, searchValue, currentPage]);
+
+  React.useEffect(() => {
+    const queryString = qs.stringify({
+      sortProperty: sort.sortProperty,
+      categoryId,
+      currentPage,
+    });
+    navigate(`?${queryString}`);
+  }, [categoryId, sort.sortProperty, currentPage]);
   return (
     <div className="container">
       <div className="content__top">
